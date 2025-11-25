@@ -1,40 +1,64 @@
-// Fix: Created a valid React component to resolve parsing errors.
 import React from 'react';
-import { CarState } from '../types';
+import { CarState, Driver, Team } from '../types';
 import Card from './ui/Card';
 
-const sampleCars: CarState[] = [
-    { driverId: 'VER', position: 1, lap: 5, gap: 'Interval', tyres: { compound: 'medium', wear: 20 }, status: 'on-track', lapTimes: [] },
-    { driverId: 'LEC', position: 2, gap: '+1.5s', lap: 5, tyres: { compound: 'medium', wear: 21 }, status: 'on-track', lapTimes: [] },
-    { driverId: 'HAM', position: 3, gap: '+3.2s', lap: 5, tyres: { compound: 'hard', wear: 15 }, status: 'on-track', lapTimes: [] },
-];
+interface LeaderboardProps {
+  cars: CarState[];
+  drivers: Driver[];
+  teams: Team[];
+}
 
-const Leaderboard: React.FC = () => {
-  const cars = sampleCars; // In a real app, this would come from props or state
+const Leaderboard: React.FC<LeaderboardProps> = ({ cars, drivers, teams }) => {
+  const driverMap = new Map(drivers.map((driver) => [driver.id, driver]));
+  const teamMap = new Map(teams.map((team) => [team.id, team]));
 
   const rowStyle: React.CSSProperties = {
     display: 'grid',
-    gridTemplateColumns: '1fr 3fr 2fr',
+    gridTemplateColumns: '0.5fr 2fr 1fr 1fr',
     alignItems: 'center',
     padding: '0.5rem',
-    borderBottom: '1px solid #eee'
-  }
+    borderBottom: '1px solid #eee',
+  };
+
+  const badgeStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontWeight: 600,
+  };
 
   return (
     <Card title="Leaderboard">
       <div>
-        <div style={{...rowStyle, fontWeight: 'bold'}}>
-            <span>Pos</span>
-            <span>Driver</span>
-            <span>Gap</span>
+        <div style={{ ...rowStyle, fontWeight: 'bold', background: '#f8fafc' }}>
+          <span>Pos</span>
+          <span>Driver</span>
+          <span>Tyres</span>
+          <span>Gap</span>
         </div>
-        {cars.map(car => (
-          <div key={car.driverId} style={rowStyle}>
-            <span>{car.position}</span>
-            <span>{car.driverId}</span>
-            <span>{car.gap}</span>
-          </div>
-        ))}
+        {cars.map((car) => {
+          const driver = driverMap.get(car.driverId);
+          const team = driver ? teamMap.get(driver.teamId) : undefined;
+          return (
+            <div key={car.driverId} style={rowStyle}>
+              <span>{car.position}</span>
+              <span style={badgeStyle}>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    background: team?.color ?? '#94a3b8',
+                  }}
+                />
+                {driver?.name ?? car.driverId}
+              </span>
+              <span>{car.tyres.compound} ({car.tyres.wear}% wear)</span>
+              <span>{car.gap}</span>
+            </div>
+          );
+        })}
       </div>
     </Card>
   );

@@ -1,4 +1,4 @@
-// Fix: Added type definitions to make the file a valid module.
+// Core domain models for the F1 management simulation.
 export interface Driver {
   id: string;
   name: string;
@@ -38,6 +38,13 @@ export interface RaceSession {
   lap: number;
   cars: CarState[];
   weather: 'dry' | 'wet';
+}
+
+export interface RaceEvent {
+  id: string;
+  lap: number;
+  message: string;
+  severity?: 'info' | 'warning' | 'critical';
 }
 
 export interface GameState {
