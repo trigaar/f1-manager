@@ -1,15 +1,43 @@
-// Fix: Replaced invalid content with a valid React component.
 import React from 'react';
+import Card from './ui/Card';
+import { RaceEvent } from '../types';
 
-const RaceLog: React.FC = () => {
+interface RaceLogProps {
+  events: RaceEvent[];
+}
+
+const severityColor: Record<NonNullable<RaceEvent['severity']>, string> = {
+  info: '#0ea5e9',
+  warning: '#f97316',
+  critical: '#ef4444',
+};
+
+const RaceLog: React.FC<RaceLogProps> = ({ events }) => {
   return (
-    <div>
-      <h3>Race Log</h3>
-      <ul>
-        <li>Lap 1: Race Start!</li>
-        <li>Lap 3: VER sets fastest lap.</li>
+    <Card title="Race Log">
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '8px' }}>
+        {events.map((event) => {
+          const color = event.severity ? severityColor[event.severity] : '#64748b';
+          return (
+            <li
+              key={event.id}
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                display: 'flex',
+                gap: '10px',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{ fontWeight: 700, color }}>Lap {event.lap}</span>
+              <span>{event.message}</span>
+            </li>
+          );
+        })}
       </ul>
-    </div>
+    </Card>
   );
 };
 

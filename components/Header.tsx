@@ -1,18 +1,24 @@
-// Fix: Created a valid React component to resolve parsing errors.
 import React from 'react';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  title: string;
+  subtitle?: string;
+}
+
+const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
   const headerStyle: React.CSSProperties = {
-    backgroundColor: '#1e1e1e',
+    backgroundColor: '#0f172a',
     color: 'white',
     padding: '1rem',
     textAlign: 'center',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+    borderBottom: '2px solid #22d3ee',
   };
 
   return (
     <header style={headerStyle}>
-      <h1>F1 Manager Sim</h1>
+      <h1 style={{ margin: 0 }}>{title}</h1>
+      {subtitle && <p style={{ margin: '0.25rem 0 0', color: '#cbd5e1' }}>{subtitle}</p>}
     </header>
   );
 };
