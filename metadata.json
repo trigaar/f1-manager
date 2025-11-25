@@ -1,0 +1,5 @@
+{
+  "name": "F1 Management Simulation",
+  "description": "A comprehensive F1 management simulation with a detailed 2025 grid, affiliate drivers, and a realistic race day engine. Features a professional, broadcast-style UI for an immersive experience.",
+  "requestFramePermissions": []
+}
