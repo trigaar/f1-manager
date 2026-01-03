@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Header from './components/Header';
 import RaceHub from './components/RaceHub';
+import PostRaceScreen from './components/PostRaceScreen';
 import { CarState, Driver, RaceEvent, RaceSession, Team } from './types';
 
 const teams: Team[] = [
@@ -49,11 +50,16 @@ const createFreshSession = (): RaceSession => ({
   })),
 });
 
+const TOTAL_RACES = 14;
+type RacePhase = 'race' | 'postRace';
+
 const App: React.FC = () => {
   const [session, setSession] = useState<RaceSession>(() => createFreshSession());
   const [events, setEvents] = useState<RaceEvent[]>(initialRaceEvents);
   const [isRunning, setIsRunning] = useState(false);
   const [simSpeed, setSimSpeed] = useState(1);
+  const [currentRace, setCurrentRace] = useState(1);
+  const [racePhase, setRacePhase] = useState<RacePhase>('race');
 
   const bestLapRef = useRef<number | null>(null);
   const eventIdRef = useRef(initialRaceEvents.length + 1);
@@ -71,6 +77,10 @@ const App: React.FC = () => {
   }, []);
 
   const advanceLap = useCallback(() => {
+    if (racePhase === 'postRace') {
+      return;
+    }
+
     let generatedEvents: Omit<RaceEvent, 'id'>[] = [];
     let finishedRace = false;
 
@@ -157,8 +167,9 @@ const App: React.FC = () => {
 
     if (finishedRace) {
       setIsRunning(false);
+      setRacePhase('postRace');
     }
-  }, [appendEvents, driverMap, teamMap]);
+  }, [appendEvents, driverMap, racePhase, teamMap]);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -166,43 +177,64 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [advanceLap, isRunning, simSpeed]);
 
-  const resetSessionState = useCallback(() => {
+  const resetSessionState = useCallback((options?: { advanceRace?: boolean; autoStart?: boolean }) => {
     bestLapRef.current = null;
     eventIdRef.current = initialRaceEvents.length + 1;
     setSession(createFreshSession());
     setEvents(initialRaceEvents);
+    setRacePhase('race');
+
+    if (options?.advanceRace) {
+      setCurrentRace((prev) => (prev >= TOTAL_RACES ? prev : prev + 1));
+    }
+
+    setIsRunning(Boolean(options?.autoStart));
   }, []);
 
   const handleReset = useCallback(() => {
-    setIsRunning(false);
-    resetSessionState();
+    resetSessionState({ autoStart: false });
+  }, [resetSessionState]);
+
+  const handleProceedToNextRace = useCallback(() => {
+    resetSessionState({ advanceRace: true, autoStart: false });
   }, [resetSessionState]);
 
   const handleToggle = useCallback(() => {
-    if (session.lap >= session.totalLaps) {
-      resetSessionState();
-      setIsRunning(true);
+    if (racePhase === 'postRace' || session.lap >= session.totalLaps) {
+      resetSessionState({ advanceRace: true, autoStart: true });
       return;
     }
     setIsRunning((prev) => !prev);
-  }, [resetSessionState, session.lap, session.totalLaps]);
+  }, [racePhase, resetSessionState, session.lap, session.totalLaps]);
 
   return (
     <div className="app-container" style={{ fontFamily: 'Inter, system-ui, sans-serif', background: '#f0f2f5', minHeight: '100vh' }}>
-      <Header title="F1 Manager Simulation" subtitle="Live race control" />
+      <Header title="F1 Manager Simulation" subtitle={racePhase === 'postRace' ? `Season progress — Race ${currentRace} of ${TOTAL_RACES}` : 'Live race control'} />
       <main style={{ padding: '1rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <RaceHub
-          session={session}
-          drivers={drivers}
-          teams={teams}
-          events={events}
-          isRunning={isRunning}
-          simSpeed={simSpeed}
-          onToggle={handleToggle}
-          onStep={advanceLap}
-          onReset={handleReset}
-          onSpeedChange={setSimSpeed}
-        />
+        {racePhase === 'postRace' ? (
+          <PostRaceScreen
+            session={session}
+            drivers={drivers}
+            teams={teams}
+            raceNumber={currentRace}
+            totalRaces={TOTAL_RACES}
+            onNextRace={handleProceedToNextRace}
+            onRestartRace={handleReset}
+          />
+        ) : (
+          <RaceHub
+            session={session}
+            drivers={drivers}
+            teams={teams}
+            events={events}
+            isRunning={isRunning}
+            simSpeed={simSpeed}
+            onToggle={handleToggle}
+            onStep={advanceLap}
+            onReset={handleReset}
+            onSpeedChange={setSimSpeed}
+          />
+        )}
       </main>
     </div>
   );
