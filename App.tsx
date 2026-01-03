@@ -76,6 +76,10 @@ const App: React.FC = () => {
   }, []);
 
   const advanceLap = useCallback(() => {
+    if (racePhase === 'postRace') {
+      return;
+    }
+
     let generatedEvents: Omit<RaceEvent, 'id'>[] = [];
     let finishedRace = false;
 
@@ -164,7 +168,7 @@ const App: React.FC = () => {
       setIsRunning(false);
       setIsPostRace(true);
     }
-  }, [appendEvents, driverMap, teamMap]);
+  }, [appendEvents, driverMap, racePhase, teamMap]);
 
   useEffect(() => {
     if (!isRunning) return;
