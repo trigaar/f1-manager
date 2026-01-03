@@ -58,10 +58,10 @@ const PostRaceScreen: React.FC<PostRaceScreenProps> = ({
           <p style={{ margin: '6px 0 0', color: '#cbd5e1' }}>AI-Generated Race Analysis</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button type="button" style={{ ...buttonStyle, background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155' }} onClick={onRestartRace}>
+          <button style={{ ...buttonStyle, background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155' }} onClick={onRestartRace}>
             Replay Race
           </button>
-          <button type="button" style={{ ...buttonStyle, background: '#f43f5e', color: '#fff' }} onClick={onNextRace}>
+          <button style={{ ...buttonStyle, background: '#f43f5e', color: '#fff' }} onClick={onNextRace}>
             Proceed to Next Race
           </button>
         </div>
