@@ -198,6 +198,18 @@ const App: React.FC = () => {
     resetSessionState({ advanceRace: true, autoStart: false });
   }, [resetSessionState]);
 
+  const handleProceedToNextRace = useCallback(() => {
+    // Force the view back into live race mode before any other work,
+    // so the UI switches immediately after the button press.
+    setRacePhase('race');
+    setIsRunning(false);
+    bestLapRef.current = null;
+    eventIdRef.current = initialRaceEvents.length + 1;
+    setSession(createFreshSession());
+    setEvents(initialRaceEvents);
+    setCurrentRace((prev) => (prev >= TOTAL_RACES ? prev : prev + 1));
+  }, []);
+
   const handleToggle = useCallback(() => {
     if (isPostRace || session.lap >= session.totalLaps) {
       resetSessionState({ advanceRace: true, autoStart: true });
