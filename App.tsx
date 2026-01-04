@@ -215,6 +215,7 @@ const App: React.FC = () => {
       resetSessionState({ advanceRace: true, autoStart: true });
       return;
     }
+
     setIsRunning((prev) => !prev);
   }, [isPostRace, resetSessionState, session.lap, session.totalLaps]);
 
