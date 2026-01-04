@@ -51,7 +51,6 @@ const createFreshSession = (): RaceSession => ({
 });
 
 const TOTAL_RACES = 14;
-type RacePhase = 'race' | 'postRace';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<RaceSession>(() => createFreshSession());
@@ -59,7 +58,7 @@ const App: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [simSpeed, setSimSpeed] = useState(1);
   const [currentRace, setCurrentRace] = useState(1);
-  const [racePhase, setRacePhase] = useState<RacePhase>('race');
+  const [isPostRace, setIsPostRace] = useState(false);
 
   const bestLapRef = useRef<number | null>(null);
   const eventIdRef = useRef(initialRaceEvents.length + 1);
@@ -167,7 +166,7 @@ const App: React.FC = () => {
 
     if (finishedRace) {
       setIsRunning(false);
-      setRacePhase('postRace');
+      setIsPostRace(true);
     }
   }, [appendEvents, driverMap, racePhase, teamMap]);
 
@@ -177,19 +176,12 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [advanceLap, isRunning, simSpeed]);
 
-  // Ensure any transition into post-race immediately halts the sim loop.
-  useEffect(() => {
-    if (racePhase === 'postRace' && isRunning) {
-      setIsRunning(false);
-    }
-  }, [isRunning, racePhase]);
-
   const resetSessionState = useCallback((options?: { advanceRace?: boolean; autoStart?: boolean }) => {
     bestLapRef.current = null;
     eventIdRef.current = initialRaceEvents.length + 1;
     setSession(createFreshSession());
     setEvents(initialRaceEvents);
-    setRacePhase('race');
+    setIsPostRace(false);
 
     if (options?.advanceRace) {
       setCurrentRace((prev) => (prev >= TOTAL_RACES ? prev : prev + 1));
@@ -203,31 +195,35 @@ const App: React.FC = () => {
   }, [resetSessionState]);
 
   const handleProceedToNextRace = useCallback(() => {
-    // Use the shared reset helper to avoid leaving stale racePhase or timers behind.
     resetSessionState({ advanceRace: true, autoStart: false });
   }, [resetSessionState]);
 
+  const handleProceedToNextRace = useCallback(() => {
+    // Force the view back into live race mode before any other work,
+    // so the UI switches immediately after the button press.
+    setRacePhase('race');
+    setIsRunning(false);
+    bestLapRef.current = null;
+    eventIdRef.current = initialRaceEvents.length + 1;
+    setSession(createFreshSession());
+    setEvents(initialRaceEvents);
+    setCurrentRace((prev) => (prev >= TOTAL_RACES ? prev : prev + 1));
+  }, []);
+
   const handleToggle = useCallback(() => {
-    if (racePhase === 'postRace') {
+    if (isPostRace || session.lap >= session.totalLaps) {
       resetSessionState({ advanceRace: true, autoStart: true });
       return;
     }
 
-    if (session.lap >= session.totalLaps) {
-      // If we somehow reach here with a finished session, push into post-race to keep states consistent.
-      setRacePhase('postRace');
-      setIsRunning(false);
-      return;
-    }
-
     setIsRunning((prev) => !prev);
-  }, [racePhase, resetSessionState, session.lap, session.totalLaps]);
+  }, [isPostRace, resetSessionState, session.lap, session.totalLaps]);
 
   return (
     <div className="app-container" style={{ fontFamily: 'Inter, system-ui, sans-serif', background: '#f0f2f5', minHeight: '100vh' }}>
-      <Header title="F1 Manager Simulation" subtitle={racePhase === 'postRace' ? `Season progress — Race ${currentRace} of ${TOTAL_RACES}` : 'Live race control'} />
+      <Header title="F1 Manager Simulation" subtitle={isPostRace ? `Season progress — Race ${currentRace} of ${TOTAL_RACES}` : 'Live race control'} />
       <main style={{ padding: '1rem', maxWidth: '1200px', margin: '0 auto' }}>
-        {racePhase === 'postRace' ? (
+        {isPostRace ? (
           <PostRaceScreen
             session={session}
             drivers={drivers}
